@@ -419,15 +419,14 @@
         demoBtn: document.getElementById("demo"),
       };
 
-      let demoMode = true; // start safe for classrooms
+      // Start in LIVE mode
+      let demoMode = false;
 
-      KEY_STORAGE = "openai_key";
+      const KEY_STORAGE = "openai_key";
 
       // Autofill from localStorage
       const saved = localStorage.getItem(KEY_STORAGE);
-      if (saved) {
-        el.key.value = saved;
-      }
+      if (saved) el.key.value = saved;
 
       // Save key manually
       document.getElementById("saveKey").addEventListener("click", () => {
@@ -482,6 +481,18 @@
 
       function removeNode(node) {
         if (node && node.parentNode) node.parentNode.removeChild(node);
+      }
+
+      // Mode UI helper
+      function updateModeUI() {
+        // Button shows the ACTION you can take next
+        el.demoBtn.textContent = demoMode
+          ? "Switch to Live Mode"
+          : "Switch to Demo Mode";
+        const status = demoMode
+          ? "Demo Mode ON — no key required"
+          : "Live Mode — using your API key if provided";
+        addMessage("bot", status, demoMode ? "Demo" : "Live");
       }
 
       // ----- Demo mode replies (no API key needed) -----
@@ -557,14 +568,26 @@
           const model = el.model.value;
 
           let reply;
-          if (demoMode || !apiKey) {
-            reply = demoReply(text, styleHint);
-          } else {
+
+          if (!demoMode) {
+            // LIVE MODE
+            if (!apiKey) {
+              removeNode(typing);
+              addMessage(
+                "bot",
+                "Live Mode requires an API key. Paste your key above (you can Save it), or click “Switch to Demo Mode” to try without a key.",
+                "Live"
+              );
+              return;
+            }
             reply = await callOpenAI(text, apiKey, model, styleHint);
+          } else {
+            // DEMO MODE
+            reply = demoReply(text, styleHint);
           }
 
           removeNode(typing);
-          addMessage("bot", reply, demoMode || !apiKey ? "Demo Mode" : model);
+          addMessage("bot", reply, demoMode ? "Demo Mode" : model);
         } catch (err) {
           removeNode(typing);
           addMessage(
@@ -583,13 +606,12 @@
       el.clear.addEventListener("click", () => {
         el.chat.innerHTML = "";
       });
+
+      // Toggle between Live and Demo
       el.demoBtn.addEventListener("click", () => {
         demoMode = !demoMode;
-        el.demoBtn.textContent = demoMode ? "Demo Mode" : "Live Mode";
-        const status = demoMode
-          ? "Demo Mode ON — no key required"
-          : "Live Mode — using your API key if provided";
-        addMessage("bot", status, demoMode ? "Demo" : "Live");
+        // Update button text and drop a small status message
+        updateModeUI();
       });
 
       el.input.addEventListener("keydown", (e) => {
@@ -599,10 +621,11 @@
         }
       });
 
-      // First-time hint bubble
+      // Initial status + welcome (starts Live)
+      updateModeUI();
       addMessage(
         "bot",
-        "Welcome! Type a question and press “Send”.\n\nNo API key? Leave it blank and tap “Demo Mode” (default). If you have one, paste it above to talk to a real model.",
+        "Welcome! Type a question and press “Send”.\n\nCurrently in Live Mode — paste your API key above. You can switch to Demo Mode anytime for fake replies.",
         "Guide"
       );
     </script>
