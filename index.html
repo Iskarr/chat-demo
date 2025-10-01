@@ -366,10 +366,10 @@
               value=""
               autocomplete="off"
             />
-            <label style="display: block; margin-top: 8px">
-              <input id="remember" type="checkbox" /> Remember on this device
-            </label>
-            <button id="clearKey" type="button">Forget key</button>
+            <div style="display: flex; gap: 6px; margin-left: 10px">
+              <button id="saveKey" type="button">Save Key</button>
+              <button id="clearKey" type="button">Forget Key</button>
+            </div>
           </div>
           <button id="clear" title="Clear chat">Clear</button>
         </div>
@@ -421,25 +421,30 @@
 
       let demoMode = true; // start safe for classrooms
 
-      const KEY_STORAGE = "openai_key";
+      KEY_STORAGE = "openai_key";
 
-      // Autofill from localStorage (never hardcode in HTML!)
+      // Autofill from localStorage
       const saved = localStorage.getItem(KEY_STORAGE);
-      if (saved) document.getElementById("key").value = saved;
-
-      // When you start your app / submit a form, if "remember" is checked, save it
-      function persistKeyIfWanted() {
-        const key = document.getElementById("key").value.trim();
-        if (document.getElementById("remember").checked && key) {
-          localStorage.setItem(KEY_STORAGE, key);
-        }
+      if (saved) {
+        el.key.value = saved;
       }
 
-      // Offer a one-click way to remove it
+      // Save key manually
+      document.getElementById("saveKey").addEventListener("click", () => {
+        const key = el.key.value.trim();
+        if (key) {
+          localStorage.setItem(KEY_STORAGE, key);
+          alert("API Key saved to this browser.");
+        } else {
+          alert("No key entered.");
+        }
+      });
+
+      // Clear key manually
       document.getElementById("clearKey").addEventListener("click", () => {
         localStorage.removeItem(KEY_STORAGE);
-        document.getElementById("key").value = "";
-        alert("Key removed from this browser.");
+        el.key.value = "";
+        alert("API Key removed from this browser.");
       });
 
       function now() {
